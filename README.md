@@ -4,6 +4,10 @@
 A modern, responsive web-based tool that helps users from different time zones find suitable meeting times. The application calculates overlapping availability windows and provides smart recommendations for optimal meeting scheduling.
 
 ![Time Zone Meeting Scheduler](https://img.shields.io/badge/Status-Ready%20to%20Use-brightgreen) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![image](https://github.com/user-attachments/assets/a3d17de3-6a68-4939-be04-c8aef2787fb7)
+![image](https://github.com/user-attachments/assets/fe0ff51f-fdc3-4431-9056-86196a3db423)
+
+
 
 ## ✨ Features
 

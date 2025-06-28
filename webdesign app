@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Zone Meeting Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+        
+        .input-section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .timezone-inputs {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .timezone-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .timezone-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .timezone-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .remove-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .remove-btn:hover {
+            background: #c53030;
+            transform: translateY(-1px);
+        }
+        
+        .add-timezone-btn, .calculate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .add-timezone-btn:hover, .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .calculate-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            font-size: 1.1rem;
+            padding: 15px 30px;
+        }
+        
+        .results-section {
+            margin-top: 30px;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #e53e3e;
+        }
+        
+        .no-overlap {
+            background: #fef5e7;
+            color: #dd6b20;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #ed8936;
+        }
+        
+        .overlap-results {
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .overlap-title {
+            color: #22543d;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .overlap-title::before {
+            content: '✅';
+            font-size: 1.2rem;
+        }
+        
+        .time-slots {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .time-slot {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #48bb78;
+        }
+        
+        .slot-header {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .local-times {
+            display: grid;
+            gap: 8px;
+        }
+        
+        .local-time {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .city-name {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .time-range {
+            color: #2d3748;
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+        
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .timezone-chip {
+            display: inline-block;
+            background: #e6fffa;
+            color: #234e52;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .timezone-input-group {
+                flex-direction: column;
+            }
+            
+            .timezone-input {
+                min-width: 100%;
+            }
+            
+            .local-time {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Time Zone Meeting Scheduler</h1>
+            <p>Find the perfect meeting time across different time zones</p>
+        </div>
+        
+        <div class="input-section">
+            <div id="timezone-inputs" class="timezone-inputs">
+                <div class="timezone-input-group">
+                    <input type="text" class="timezone-input" placeholder="Enter city or country (e.g., New York, London, Tokyo)" value="">
+                </div>
+                <div class="timezone-input-group">
+                    <input type="text" class="timezone-input" placeholder="Enter city or country (e.g., New York, London, Tokyo)" value="">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="add-timezone-btn" onclick="addTimezoneInput()">+ Add Another Location</button>
+                <button class="calculate-btn" onclick="calculateMeetingTimes()">🎯 Find Meeting Times</button>
+            </div>
+        </div>
+        
+        <div id="results" class="results-section"></div>
+    </div>
+
+    <script>
+        // Major cities and their time zones for better matching
+        const cityTimezones = {
+            // North America
+            'new york': 'America/New_York',
+            'los angeles': 'America/Los_Angeles',
+            'chicago': 'America/Chicago',
+            'toronto': 'America/Toronto',
+            'vancouver': 'America/Vancouver',
+            'mexico city': 'America/Mexico_City',
+            
+            // Europe
+            'london': 'Europe/London',
+            'paris': 'Europe/Paris',
+            'berlin': 'Europe/Berlin',
+            'madrid': 'Europe/Madrid',
+            'rome': 'Europe/Rome',
+            'amsterdam': 'Europe/Amsterdam',
+            'zurich': 'Europe/Zurich',
+            'stockholm': 'Europe/Stockholm',
+            'moscow': 'Europe/Moscow',
+            
+            // Asia
+            'tokyo': 'Asia/Tokyo',
+            'singapore': 'Asia/Singapore',
+            'hong kong': 'Asia/Hong_Kong',
+            'seoul': 'Asia/Seoul',
+            'beijing': 'Asia/Shanghai',
+            'shanghai': 'Asia/Shanghai',
+            'mumbai': 'Asia/Kolkata',
+            'delhi': 'Asia/Kolkata',
+            'bangalore': 'Asia/Kolkata',
+            'dubai': 'Asia/Dubai',
+            
+            // Australia & Oceania
+            'sydney': 'Australia/Sydney',
+            'melbourne': 'Australia/Melbourne',
+            'auckland': 'Pacific/Auckland',
+            
+            // Countries
+            'usa': 'America/New_York',
+            'canada': 'America/Toronto',
+            'uk': 'Europe/London',
+            'germany': 'Europe/Berlin',
+            'france': 'Europe/Paris',
+            'japan': 'Asia/Tokyo',
+            'china': 'Asia/Shanghai',
+            'india': 'Asia/Kolkata',
+            'australia': 'Australia/Sydney',
+            'singapore': 'Asia/Singapore'
+        };
+
+        function addTimezoneInput() {
+            const container = document.getElementById('timezone-inputs');
+            const newGroup = document.createElement('div');
+            newGroup.className = 'timezone-input-group';
+            newGroup.innerHTML = `
+                <input type="text" class="timezone-input" placeholder="Enter city or country (e.g., New York, London, Tokyo)" value="">
+                <button class="remove-btn" onclick="removeTimezoneInput(this)">Remove</button>
+            `;
+            container.appendChild(newGroup);
+        }
+
+        function removeTimezoneInput(button) {
+            const container = document.getElementById('timezone-inputs');
+            if (container.children.length > 2) {
+                button.parentElement.remove();
+            }
+        }
+
+        function getTimezone(location) {
+            const normalized = location.toLowerCase().trim();
+            return cityTimezones[normalized] || null;
+        }
+
+        function formatTime(hour, minute = 0) {
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+            return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+        }
+
+        function getTimeInTimezone(utcTime, timezone) {
+            try {
+                const date = new Date();
+                date.setUTCHours(utcTime, 0, 0, 0);
+                
+                const options = {
+                    timeZone: timezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                };
+                
+                return date.toLocaleString('en-US', options);
+            } catch (error) {
+                return `${utcTime}:00 UTC`;
+            }
+        }
+
+        function getUTCOffsetForTimezone(timezone) {
+            try {
+                const now = new Date();
+                const utc = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+                const local = new Date(utc.toLocaleString("en-US", {timeZone: timezone}));
+                return (local.getTime() - utc.getTime()) / (1000 * 60 * 60);
+            } catch (error) {
+                return 0;
+            }
+        }
+
+        function findOverlappingTimes(locations) {
+            const results = [];
+            
+            // Convert each location's 9 AM - 8 PM to UTC hours
+            const locationRanges = locations.map(loc => {
+                const offset = getUTCOffsetForTimezone(loc.timezone);
+                const startUTC = (9 - offset + 24) % 24;
+                const endUTC = (20 - offset + 24) % 24;
+                
+                return {
+                    location: loc.location,
+                    timezone: loc.timezone,
+                    startUTC: startUTC,
+                    endUTC: endUTC,
+                    offset: offset
+                };
+            });
+
+            // Find overlapping hours
+            for (let utcHour = 0; utcHour < 24; utcHour++) {
+                let allAvailable = true;
+                
+                for (const range of locationRanges) {
+                    let available = false;
+                    
+                    if (range.startUTC <= range.endUTC) {
+                        // Normal case: range doesn't cross midnight
+                        available = utcHour >= range.startUTC && utcHour < range.endUTC;
+                    } else {
+                        // Range crosses midnight
+                        available = utcHour >= range.startUTC || utcHour < range.endUTC;
+                    }
+                    
+                    if (!available) {
+                        allAvailable = false;
+                        break;
+                    }
+                }
+                
+                if (allAvailable) {
+                    const timeSlot = {
+                        utcHour: utcHour,
+                        localTimes: locations.map(loc => ({
+                            location: loc.location,
+                            timezone: loc.timezone,
+                            time: getTimeInTimezone(utcHour, loc.timezone)
+                        }))
+                    };
+                    results.push(timeSlot);
+                }
+            }
+
+            return results;
+        }
+
+        function groupConsecutiveHours(timeSlots) {
+            if (timeSlots.length === 0) return [];
+            
+            const groups = [];
+            let currentGroup = [timeSlots[0]];
+            
+            for (let i = 1; i < timeSlots.length; i++) {
+                const prevHour = timeSlots[i-1].utcHour;
+                const currentHour = timeSlots[i].utcHour;
+                
+                // Check if hours are consecutive (accounting for midnight wrap)
+                if ((currentHour === (prevHour + 1) % 24)) {
+                    currentGroup.push(timeSlots[i]);
+                } else {
+                    groups.push(currentGroup);
+                    currentGroup = [timeSlots[i]];
+                }
+            }
+            groups.push(currentGroup);
+            
+            return groups;
+        }
+
+        async function calculateMeetingTimes() {
+            const inputs = document.querySelectorAll('.timezone-input');
+            const locations = [];
+            const resultsDiv = document.getElementById('results');
+            
+            // Show loading
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Calculating optimal meeting times...</div>
+                </div>
+            `;
+            
+            // Validate inputs
+            for (const input of inputs) {
+                const location = input.value.trim();
+                if (!location) {
+                    resultsDiv.innerHTML = '<div class="error">Please fill in all location fields.</div>';
+                    return;
+                }
+                
+                const timezone = getTimezone(location);
+                if (!timezone) {
+                    resultsDiv.innerHTML = `<div class="error">Could not find timezone for "${location}". Please try a major city name like "New York", "London", or "Tokyo".</div>`;
+                    return;
+                }
+                
+                locations.push({ location, timezone });
+            }
+            
+            // Simulate processing delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Find overlapping times
+            const overlaps = findOverlappingTimes(locations);
+            
+            if (overlaps.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="no-overlap">
+                        <h3>😔 No overlapping times found</h3>
+                        <p>Unfortunately, there are no hours where all participants would be available between 9 AM and 8 PM in their local time zones.</p>
+                        <p><strong>Suggestion:</strong> Consider extending availability hours or scheduling across multiple days.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group consecutive hours
+            const timeGroups = groupConsecutiveHours(overlaps);
+            
+            let resultsHTML = '<div class="overlap-results">';
+            resultsHTML += '<div class="overlap-title">Available Meeting Times</div>';
+            resultsHTML += '<div class="time-slots">';
+            
+            timeGroups.forEach((group, index) => {
+                const startSlot = group[0];
+                const endSlot = group[group.length - 1];
+                
+                resultsHTML += '<div class="time-slot">';
+                resultsHTML += `<div class="slot-header">Option ${index + 1}: ${group.length} hour${group.length > 1 ? 's' : ''} available</div>`;
+                resultsHTML += '<div class="local-times">';
+                
+                startSlot.localTimes.forEach(localTime => {
+                    const startTime = localTime.time;
+                    const endHour = (endSlot.utcHour + 1) % 24;
+                    const endTime = getTimeInTimezone(endHour, localTime.timezone);
+                    
+                    resultsHTML += `
+                        <div class="local-time">
+                            <span class="city-name">${localTime.location}</span>
+                            <span class="time-range">${startTime} - ${endTime}</span>
+                        </div>
+                    `;
+                });
+                
+                resultsHTML += '</div></div>';
+            });
+            
+            resultsHTML += '</div></div>';
+            
+            // Add best recommendation
+            const bestOption = timeGroups.reduce((best, current) => 
+                current.length > best.length ? current : best
+            );
+            
+            if (bestOption.length > 0) {
+                resultsHTML += `
+                    <div class="overlap-results" style="background: #fff5f5; border-color: #fed7d7;">
+                        <div class="overlap-title" style="color: #c53030;">🎯 Recommended Meeting Time</div>
+                        <div class="time-slot" style="border-left-color: #e53e3e;">
+                            <div class="slot-header">Best ${bestOption.length}-hour window:</div>
+                            <div class="local-times">
+                `;
+                
+                bestOption[0].localTimes.forEach(localTime => {
+                    const startTime = localTime.time;
+                    const endHour = (bestOption[bestOption.length - 1].utcHour + 1) % 24;
+                    const endTime = getTimeInTimezone(endHour, localTime.timezone);
+                    
+                    resultsHTML += `
+                        <div class="local-time">
+                            <span class="city-name">${localTime.location}</span>
+                            <span class="time-range">${startTime} - ${endTime}</span>
+                        </div>
+                    `;
+                });
+                
+                resultsHTML += '</div></div></div>';
+            }
+            
+            resultsDiv.innerHTML = resultsHTML;
+        }
+
+        // Initialize with some example values for demo
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.timezone-input');
+            if (inputs.length >= 2) {
+                inputs[0].value = 'New York';
+                inputs[1].value = 'London';
+            }
+        });
+    </script>
+</body>
+</html>
